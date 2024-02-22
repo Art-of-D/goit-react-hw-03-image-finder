@@ -22,7 +22,6 @@ class App extends Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    console.log('update');
     const { loading, imageList, zoomImage } = this.state;
     if (loading) {
       this.startSearch();
