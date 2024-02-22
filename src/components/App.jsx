@@ -5,7 +5,7 @@ import { Modal } from './Modal/Modal';
 import style from './App.module.css';
 import { Component } from 'react';
 import { getImagesByTag } from '../service/pixabay/getImages';
-import { ColorRing } from 'react-loader-spinner';
+import { Loader } from './Loader/Loader';
 
 class App extends Component {
   state = {
@@ -22,48 +22,44 @@ class App extends Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    const { searchWord, loading } = this.state;
-    if (prevState.searchWord !== searchWord && prevState.imageList.length > 0) {
-      this.clearState();
-    }
+    console.log('update');
+    const { loading, imageList, zoomImage } = this.state;
     if (loading) {
       this.startSearch();
-      setTimeout(() => {
-        this.scrollToEnd();
-      }, 300);
+    }
+    if (!loading && imageList.length > prevState.imageList.length) {
+      this.scrollToEnd();
+    }
+    if (zoomImage) {
+      document.addEventListener('keydown', this.handleKeydownModal);
     }
   }
 
-  clearState = () => {
-    this.setState(() => ({
-      imageList: [],
-      total: 0,
-      page: 1,
-      loading: false,
-    }));
-  };
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.handleKeydownModal);
+  }
 
   startSearch = async () => {
     const { page, per_page, searchWord } = this.state;
     try {
-      const result = await getImagesByTag(searchWord, page, per_page);
-      const list = result.hits;
-      const total = result.total;
+      const { hits, total } = await getImagesByTag(searchWord, page, per_page);
       this.setState(prevState => ({
-        imageList: [...prevState.imageList, ...list],
+        imageList: [...prevState.imageList, ...hits],
         total: total,
-        loading: false,
       }));
     } catch (e) {
       this.setState({
         error: e.message,
-        loading: false,
       });
+    } finally {
+      this.setState(() => ({
+        loading: false,
+      }));
     }
   };
 
-  addPage = async () => {
-    await this.setState(prevState => ({
+  addPage = () => {
+    this.setState(prevState => ({
       page: prevState.page + 1,
       loading: true,
     }));
@@ -72,7 +68,15 @@ class App extends Component {
   addSearchWord = searchWord => {
     this.setState(() => ({
       searchWord: searchWord,
+      imageList: [],
+      total: 0,
+      per_page: 10,
+      page: 1,
+      zoomImage: false,
+      tags: '',
+      largeImageURL: '',
       loading: true,
+      error: '',
     }));
   };
 
@@ -90,6 +94,12 @@ class App extends Component {
       tags: '',
       largeImageURL: '',
     }));
+  };
+
+  handleKeydownModal = e => {
+    if (e.key === 'Escape') {
+      this.closeImage();
+    }
   };
 
   scrollToEnd = () => {
@@ -115,18 +125,10 @@ class App extends Component {
       <div className={style.AppBody}>
         <Searchbar addSearchWord={this.addSearchWord} />
         {error && <div>Error: {error}</div>}
-        {imageList.length > 0 && !loading && (
+        {imageList.length > 0 && (
           <ImageGallery imageList={imageList} openImage={this.openImage} />
         )}
-        {loading && (
-          <ColorRing
-            visible={true}
-            ariaLabel="color-ring-loading"
-            wrapperStyle={{}}
-            colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
-            wrapperClass={style.ColorRing}
-          />
-        )}
+        {loading && <Loader />}
         {total / per_page >= page && !loading && (
           <Button addPage={this.addPage} />
         )}
