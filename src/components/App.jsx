@@ -1,7 +1,7 @@
 import Searchbar from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
-import { Modal } from './Modal/Modal';
+import Modal from './Modal/Modal';
 import style from './App.module.css';
 import { Component } from 'react';
 import { getImagesByTag } from '../service/pixabay/getImages';
@@ -22,20 +22,13 @@ class App extends Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    const { loading, imageList, zoomImage } = this.state;
+    const { loading, imageList } = this.state;
     if (loading) {
       this.startSearch();
     }
     if (!loading && imageList.length > prevState.imageList.length) {
       this.scrollToEnd();
     }
-    if (zoomImage) {
-      document.addEventListener('keydown', this.handleKeydownModal);
-    }
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleKeydownModal);
   }
 
   startSearch = async () => {
@@ -87,18 +80,12 @@ class App extends Component {
     }));
   };
 
-  closeImage = () => {
+  closeModal = () => {
     this.setState(() => ({
       zoomImage: false,
       tags: '',
       largeImageURL: '',
     }));
-  };
-
-  handleKeydownModal = e => {
-    if (e.key === 'Escape') {
-      this.closeImage();
-    }
   };
 
   scrollToEnd = () => {
@@ -133,9 +120,10 @@ class App extends Component {
         )}
         {zoomImage && (
           <Modal
+            zoomImage={zoomImage}
             tags={tags}
             largeImageURL={largeImageURL}
-            onClose={this.closeImage}
+            closeModal={this.closeModal}
           />
         )}
       </div>

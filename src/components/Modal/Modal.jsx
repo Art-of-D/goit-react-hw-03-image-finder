@@ -1,17 +1,30 @@
+import { Component } from 'react';
 import style from './Modal.module.css';
-
-export const Modal = ({ tags, largeImageURL, onClose }) => {
-  const closeModal = e => {
-    console.log(e.target.className);
-    if (e.target.className === style.Overlay) {
-      onClose();
+class Modal extends Component {
+  handleCloseModal = e => {
+    const { closeModal } = this.props;
+    if (e.key === 'Escape' || e.target.className === style.Overlay) {
+      closeModal();
     }
   };
-  return (
-    <div className={style.Overlay} onClick={closeModal}>
-      <div className={style.Modal}>
-        <img src={largeImageURL} alt={tags} />
+
+  componentDidMount() {
+    document.addEventListener('keydown', this.handleCloseModal);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.handleCloseModal);
+  }
+
+  render() {
+    const { tags, largeImageURL } = this.props;
+    return (
+      <div className={style.Overlay} onClick={this.handleCloseModal}>
+        <div className={style.Modal}>
+          <img src={largeImageURL} alt={tags} />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+}
+export default Modal;
